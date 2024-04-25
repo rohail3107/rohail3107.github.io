@@ -10,23 +10,24 @@ on:
 jobs:
   sync_job:
     runs-on: ubuntu-latest
-
     steps:
     - name: Checkout private repo
       uses: actions/checkout@v3
       with:
         repository: Rohail07/Rohailtest
-        path: https://github.com/Australian-Associated-Press/Rohailtest/tree/develop
+        path: private-repo
         ref: develop
+        token: ${{ secrets.MY_PAT }}
 
     - name: Checkout remote repo
       uses: actions/checkout@v3
       with:
         repository: rohail3107/rohail3107.github.io
-        path: https://github.com/rohail3107/rohail3107.github.io/tree/master
+        path: remote-repo
         ref: master
+        token: ${{ secrets.MY_PAT }}
 
-    - name: Compare commits
+    - name: Compare and sync commits
       run: |
         cd remote-repo
         REMOTE_COMMIT=$(git rev-parse HEAD)
@@ -36,13 +37,15 @@ jobs:
         echo "Private commit: $PRIVATE_COMMIT"
         if [ "$REMOTE_COMMIT" != "$PRIVATE_COMMIT" ]; then
           echo "Private repository is out-of-date with the remote repository."
-          # If there are changes, perform the sync
-          cd ../private-repo
+          # Sync repositories
+          git pull origin develop
+          cd ../remote-repo
           git pull origin master
+          cd ../private-repo
           git pull ../remote-repo master
           git push origin develop
           echo "Private repository has been updated with changes from the remote repository."
         else
           echo "Private repository is up-to-date with the remote repository."
       env:
-        GITHUB_TOKEN: ${{ secrets.MY_PAT}}
+        GITHUB_TOKEN: ${{ secrets.MY_PAT }}
